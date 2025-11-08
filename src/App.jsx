@@ -221,8 +221,6 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
                   subtitle={`${track.artists.map((artist) => artist.name).join(', ')} • ${
                     track.album?.name
                   }`}
-                  metricLabel="Popularity"
-                  metricValue={track.popularity}
                   externalUrl={track.external_urls?.spotify}
                 />
               )}
