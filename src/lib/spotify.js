@@ -226,7 +226,7 @@ export async function fetchProfile() {
   return spotifyRequest('/me');
 }
 
-export async function fetchTopItems(type, timeRange = 'medium_term', limit = 10) {
+export async function fetchTopItems(type, timeRange = 'medium_term', limit = 20) {
   return spotifyRequest(
     `/me/top/${type}?time_range=${timeRange}&limit=${limit}`
   );
