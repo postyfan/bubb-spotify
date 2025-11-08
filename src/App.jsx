@@ -151,7 +151,7 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
         <section className="card card--center">
           <h2>Connect Spotify</h2>
           <p className="muted">
-            We use Spotify’s secure PKCE flow and only request read-only scopes.
+              Log in to your spotify
           </p>
           {authError && <p className="error">{authError}</p>}
           <button className="button" onClick={initiateSpotifyLogin}>
