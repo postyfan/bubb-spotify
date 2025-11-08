@@ -14,7 +14,7 @@ import {
 const TIME_RANGES = [
   { id: 'short_term', label: 'Last 4 Weeks' },
   { id: 'medium_term', label: 'Last 6 Months' },
-  { id: 'long_term', label: 'All Time' },
+  { id: 'long_term', label: 'Last 12 Months' },
 ];
 
 const ITEM_LIMITS = [
@@ -190,7 +190,7 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
             <div className="section-header">
               <div>
                 <p className="muted">Time range</p>
-                <h3>Customize your stats</h3>
+                <h3>Stats</h3>
               </div>
               <div className="range-toggle">
                 {TIME_RANGES.map((range) => (
@@ -309,10 +309,9 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
     <div className="app">
       <header className="app__header">
         <div>
-          <p className="muted">Spotify data companion</p>
+          <p className="muted">Spotify Data Results</p>
           <h1>Personal Stats</h1>
         </div>
-        <div className="badge">PKCE Auth</div>
       </header>
       <main className="app__content">{renderContent}</main>
     </div>
@@ -324,7 +323,6 @@ function StatsList({ title, items, renderItem }) {
     <article className="card">
       <div className="section-header">
         <div>
-          <p className="muted">Insights</p>
           <h3>{title}</h3>
         </div>
       </div>
