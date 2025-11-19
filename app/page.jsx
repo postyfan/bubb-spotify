@@ -30,6 +30,7 @@ const ITEM_LIMITS = [
 const numberFormatter = new Intl.NumberFormat();
 
 // Client component because it relies on browser storage and URL params for OAuth.
+// Layout customization tip: wrap sections with your own containers or swap the header/main markup below to change spacing/structure.
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,6 +52,7 @@ export default function HomePage() {
   });
 
   // On mount, exchange the OAuth code (if present) and hydrate the saved session.
+  // If you change the redirect route, update `router.replace('/')` to your new path.
   useEffect(() => {
     if (!configReady) return;
 
@@ -91,6 +93,7 @@ export default function HomePage() {
   }, [configReady, router, searchParams]);
 
   // Fetch top artists/tracks/recent plays in parallel whenever filters change.
+  // You can add/remove sections by editing the Promise.all list and the render blocks below.
   const loadStats = useCallback(
     async (range, limit) => {
       if (status !== 'ready') return;
@@ -125,15 +128,18 @@ export default function HomePage() {
   }, [status, selectedRange, selectedLimit, loadStats]);
 
   // Clears stored tokens and sends the user back to the landing state.
+  // To route elsewhere after logout, swap `router.replace('/')` for your preferred URL.
   const handleLogout = useCallback(() => {
     clearSpotifySession();
     router.replace('/');
   }, [router]);
 
   const renderContent = useMemo(() => {
+    // The UI below is grouped by auth state. Rearrange or add sections to change the layout for each state.
     if (!configReady) {
       return (
         <section className="card">
+          {/* Change this panel to adjust the pre-auth instructions layout. Swap the <pre> for your own component if desired. */}
           <h2>Finish the setup</h2>
           <p>
             Add your Spotify App credentials to a <code>.env.local</code> file:
@@ -161,6 +167,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
     if (status === 'needs-login') {
       return (
         <section className="card card--center">
+          {/* Customize this hero/login section or replace the button with your own call-to-action. */}
           <h2>Connect Spotify</h2>
           <p className="muted">Log in to your Spotify account.</p>
           {authError && <p className="error">{authError}</p>}
@@ -174,6 +181,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
     if (status === 'ready') {
       return (
         <>
+          {/* Profile header. To move it elsewhere, lift this component or swap the surrounding fragment order. */}
           <ProfileCard
             profile={profile}
             followerLabel={numberFormatter.format(profile?.followers?.total || 0)}
@@ -181,6 +189,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
           />
 
           <section className="card">
+            {/* Filter bar. Add new toggles or controls here to change data queries or layout behavior. */}
             <div className="section-header">
               <div>
                 <p className="muted">Time range</p>
@@ -224,6 +233,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
           </section>
 
           <section className="grid">
+            {/* Stats columns. Add/remove <StatsList> blocks to change the columns shown, or reorder them. */}
             <StatsList
               title="Top Tracks"
               items={stats.topTracks}
@@ -296,6 +306,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
 
   return (
     <div className="app">
+      {/* Page shell: adjust header/main markup or class names to change global spacing/columns. */}
       <header className="app__header">
         <div>
           <p className="muted">Spotify Data Results</p>

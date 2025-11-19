@@ -1,3 +1,4 @@
+/* Page shell: adjust padding/max-width/grid gap to reshape the overall layout. */
 .app {
   padding: clamp(1rem, 3vw, 2.5rem);
   min-height: 100vh;
@@ -31,6 +32,7 @@
   gap: 1.5rem;
 }
 
+/* Card base: tweak border radius, padding, or shadows to change the feel of every panel. */
 .card {
   background: #181818;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -151,6 +153,7 @@
   color: #0b0b0b;
 }
 
+/* Stats grid: change column count/breakpoints to rearrange the lists. */
 .grid {
   display: grid;
   gap: 1.5rem;

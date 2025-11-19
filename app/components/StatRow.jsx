@@ -1,6 +1,7 @@
 'use client';
 
 // Displays a single ranked item with artwork, title, subtitle, and an optional metric.
+// Layout tweaks: adjust the grid by changing classNames, or swap the metric block to the left/right as needed.
 export default function StatRow({
   rank,
   image,
