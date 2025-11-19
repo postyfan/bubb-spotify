@@ -1,5 +1,10 @@
+'use client';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import './App.css';
+import { useRouter, useSearchParams } from 'next/navigation';
+import ProfileCard from './components/ProfileCard';
+import StatRow from './components/StatRow';
+import StatsList from './components/StatsList';
 import {
   clearSpotifySession,
   exchangeCodeForToken,
@@ -9,7 +14,7 @@ import {
   hasSpotifyConfig,
   initiateSpotifyLogin,
   ensureAccessToken,
-} from './lib/spotify';
+} from '../lib/spotify';
 
 const TIME_RANGES = [
   { id: 'short_term', label: 'Last 4 Weeks' },
@@ -24,7 +29,11 @@ const ITEM_LIMITS = [
 
 const numberFormatter = new Intl.NumberFormat();
 
-function App() {
+// Client component because it relies on browser storage and URL params for OAuth.
+export default function HomePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const configReady = hasSpotifyConfig();
   const [status, setStatus] = useState(
     configReady ? 'checking-session' : 'missing-config'
@@ -41,19 +50,17 @@ function App() {
     recentlyPlayed: [],
   });
 
+  // On mount, exchange the OAuth code (if present) and hydrate the saved session.
   useEffect(() => {
     if (!configReady) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const oauthError = params.get('error');
+    const code = searchParams.get('code');
+    const oauthError = searchParams.get('error');
 
     if (oauthError) {
       setAuthError(`Spotify authentication failed: ${oauthError}`);
       setStatus('needs-login');
-      params.delete('error');
-      params.delete('state');
-      window.history.replaceState({}, '', window.location.pathname);
+      router.replace('/');
       return;
     }
 
@@ -62,9 +69,7 @@ function App() {
       try {
         if (code) {
           await exchangeCodeForToken(code);
-          params.delete('code');
-          params.delete('state');
-          window.history.replaceState({}, '', window.location.pathname);
+          router.replace('/');
         }
 
         const token = await ensureAccessToken();
@@ -83,8 +88,9 @@ function App() {
     };
 
     hydrateSession();
-  }, [configReady]);
+  }, [configReady, router, searchParams]);
 
+  // Fetch top artists/tracks/recent plays in parallel whenever filters change.
   const loadStats = useCallback(
     async (range, limit) => {
       if (status !== 'ready') return;
@@ -118,10 +124,11 @@ function App() {
     }
   }, [status, selectedRange, selectedLimit, loadStats]);
 
+  // Clears stored tokens and sends the user back to the landing state.
   const handleLogout = useCallback(() => {
     clearSpotifySession();
-    window.location.replace(window.location.origin);
-  }, []);
+    router.replace('/');
+  }, [router]);
 
   const renderContent = useMemo(() => {
     if (!configReady) {
@@ -129,12 +136,11 @@ function App() {
         <section className="card">
           <h2>Finish the setup</h2>
           <p>
-            Add your Spotify App credentials to a <code>.env.local</code>{' '}
-            file:
+            Add your Spotify App credentials to a <code>.env.local</code> file:
           </p>
           <pre className="code-block">
-            {`VITE_SPOTIFY_CLIENT_ID=your_client_id
-VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
+            {`NEXT_PUBLIC_SPOTIFY_CLIENT_ID=your_client_id
+NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
           </pre>
           <p className="muted">
             Use the same redirect URI here and in your Spotify dashboard.
@@ -156,9 +162,7 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
       return (
         <section className="card card--center">
           <h2>Connect Spotify</h2>
-          <p className="muted">
-              Log in to your spotify
-          </p>
+          <p className="muted">Log in to your Spotify account.</p>
           {authError && <p className="error">{authError}</p>}
           <button className="button" onClick={initiateSpotifyLogin}>
             Connect my account
@@ -170,21 +174,11 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
     if (status === 'ready') {
       return (
         <>
-          <section className="card profile-card">
-            <div className="profile">
-              <ProfileAvatar profile={profile} />
-              <div>
-                <p className="muted">Logged in as</p>
-                <h2>{profile?.display_name}</h2>
-                <p className="muted">
-                  Followers: {numberFormatter.format(profile?.followers?.total || 0)}
-                </p>
-              </div>
-            </div>
-            <button className="button button--ghost" onClick={handleLogout}>
-              Sign out
-            </button>
-          </section>
+          <ProfileCard
+            profile={profile}
+            followerLabel={numberFormatter.format(profile?.followers?.total || 0)}
+            onLogout={handleLogout}
+          />
 
           <section className="card">
             <div className="section-header">
@@ -313,58 +307,6 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173`}
   );
 }
 
-function StatsList({ title, items, renderItem }) {
-  return (
-    <article className="card">
-      <div className="section-header">
-        <div>
-          <h3>{title}</h3>
-        </div>
-      </div>
-      <ul className="entity-list">
-        {items?.length ? (
-          items.map((item, index) => renderItem(item, index))
-        ) : (
-          <li className="muted">No data available.</li>
-        )}
-      </ul>
-    </article>
-  );
-}
-
-function StatRow({
-  rank,
-  image,
-  title,
-  subtitle,
-  metricLabel,
-  metricValue,
-  externalUrl,
-}) {
-  return (
-    <li className="entity">
-      <span className="entity__rank">{rank}</span>
-      {image && <img src={image} alt="" className="entity__thumb" />}
-      <div className="entity__meta">
-        <a
-          href={externalUrl || '#'}
-          target={externalUrl ? '_blank' : undefined}
-          rel={externalUrl ? 'noreferrer' : undefined}
-          className="entity__title"
-          aria-disabled={!externalUrl}
-        >
-          {title}
-        </a>
-        <p className="entity__subtitle">{subtitle}</p>
-      </div>
-      <div className="entity__metric">
-        <span>{metricLabel}</span>
-        <strong>{metricValue}</strong>
-      </div>
-    </li>
-  );
-}
-
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const diffMs = Date.now() - date.getTime();
@@ -375,25 +317,3 @@ function formatRelativeTime(dateString) {
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 }
-
-function ProfileAvatar({ profile }) {
-  const image = profile?.images?.[0]?.url;
-  if (image) {
-    return (
-      <img
-        src={image}
-        alt={profile?.display_name || 'Spotify user'}
-        className="profile__avatar"
-      />
-    );
-  }
-
-  const initial = profile?.display_name?.[0] || '?';
-  return (
-    <div className="profile__avatar profile__avatar--fallback">
-      {initial.toUpperCase()}
-    </div>
-  );
-}
-
-export default App;
