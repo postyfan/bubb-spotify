@@ -7,6 +7,7 @@ import StatRow from './components/StatRow';
 import StatsList from './components/StatsList';
 import MetricHighlights from './components/MetricHighlights';
 import InsightsPanel from './components/InsightsPanel';
+import { Heart, Sparkles, Star } from 'lucide-react';
 import {
   clearSpotifySession,
   exchangeCodeForToken,
@@ -394,6 +395,86 @@ function DashboardPage() {
     }
   }, [profile?.email, status]);
 
+  const loginErrorMessage = authError || '';
+
+  const heroContent = useMemo(() => {
+    if (!configReady) {
+      return {
+        title: 'Add your Spotify App credentials',
+        description:
+          'Drop your client ID and redirect URI into .env.local so Statify can finish the PKCE handshake.',
+        badges: ['Configuration pending', 'Follow the steps below'],
+        footnote: 'Once saved, reload to continue.',
+        showLoginButton: false,
+      };
+    }
+
+    if (status === 'checking-session') {
+      return {
+        title: 'Validating your Spotify session',
+        description: 'Hang tight while we refresh your access token.',
+        badges: ['Secure OAuth in progress'],
+        showLoginButton: false,
+      };
+    }
+
+    if (status === 'needs-login') {
+      return {
+        title: 'Plug into Spotify',
+        description:
+          'Authorize Statify to spin up your personal listening zine with playlists, stats, and recent spins.',
+        badges: ['Scopes: playlists + stats', 'Tokens live in your browser'],
+        footnote: 'No backend storage — everything stays local.',
+        errorMessage: loginErrorMessage,
+        showLoginButton: true,
+      };
+    }
+
+    if (status === 'ready') {
+      return {
+        title: `Welcome back, ${profile?.display_name || 'listener'}!`,
+        description: `Curating ${selectedRangeLabel} of your listening history with fresh syncs on demand.`,
+        badges: [
+          `Window: ${selectedRangeLabel}`,
+          lastUpdated ? `Synced: ${formatTimestamp(lastUpdated)}` : 'Sync pending',
+        ],
+        footnote: 'Scroll for dashboards, playlist export, and recent spins.',
+        showLoginButton: false,
+      };
+    }
+
+      return {
+        title: 'Statify is warming up',
+        description: 'Fetching your account context.',
+        badges: ['Please wait…'],
+        showLoginButton: false,
+      };
+  }, [configReady, lastUpdated, loginErrorMessage, profile?.display_name, selectedRangeLabel, status]);
+
+  const heroBadges = heroContent.badges?.length ? (
+    <div className="y2k-hero__badges">
+      {heroContent.badges.map((badge) => (
+        <span key={badge} className="pixel-pill">
+          {badge}
+        </span>
+      ))}
+    </div>
+  ) : null;
+
+  const heroFootnote = heroContent.footnote ? (
+    <p className="y2k-hero__footnote muted">{heroContent.footnote}</p>
+  ) : null;
+
+  const heroAction = heroContent.showLoginButton ? (
+    <button className="button y2k-hero__cta" onClick={initiateSpotifyLogin}>
+      Connect Spotify
+    </button>
+  ) : null;
+
+  const heroError = heroContent.errorMessage ? (
+    <p className="y2k-hero__error error">{heroContent.errorMessage}</p>
+  ) : null;
+
   const renderContent = useMemo(() => {
     // The UI below is grouped by auth state. Rearrange or add sections to change the layout for each state.
     if (!configReady) {
@@ -425,25 +506,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
     }
 
     if (status === 'needs-login') {
-      return (
-        <section className="card card--center">
-          {/* Customize this hero/login section or replace the button with your own call-to-action. */}
-          <h2>Connect Spotify</h2>
-          <p className="muted">
-            Statify visualizes your personal listening universe with Y2K vibes.
-            Connect to pull your top artists, tracks, and recent plays.
-          </p>
-          <ul className="landing-points">
-            <li>Top tracks & artists by time range</li>
-            <li>Recently played snapshots with timestamps</li>
-            <li>Privacy first: tokens stay in your browser</li>
-          </ul>
-          {authError && <p className="error">{authError}</p>}
-          <button className="button" onClick={initiateSpotifyLogin}>
-            Connect my account
-          </button>
-        </section>
-      );
+      return null;
     }
 
     if (status === 'ready') {
@@ -636,7 +699,6 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
 
     return null;
   }, [
-    authError,
     configReady,
     handleLogout,
     handleRefresh,
@@ -656,23 +718,60 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000`}
   ]);
 
   return (
-    <div className="app">
-      {/* Page shell: adjust header/main markup or class names to change global spacing/columns. */}
-      <header className="app__header">
-        <div className="app__brand">
-          <div className="app__brand-orb" aria-hidden />
-          <div>
-            <p className="muted">Statify Command Center</p>
-            <h1>Listening Intelligence</h1>
+    <div className="app y2k-shell">
+      <div className="y2k-floating y2k-floating--1" aria-hidden>
+        <Heart className="y2k-floating__icon" />
+      </div>
+      <div className="y2k-floating y2k-floating--2" aria-hidden>
+        <Star className="y2k-floating__icon" />
+      </div>
+      <div className="y2k-floating y2k-floating--3" aria-hidden>
+        <Sparkles className="y2k-floating__icon" />
+      </div>
+      <div className="y2k-floating y2k-floating--4" aria-hidden>
+        <Heart className="y2k-floating__icon" />
+      </div>
+
+      <section className="card y2k-hero pink-gingham scanlines crt-noise">
+        <div className="myspace-title-bar y2k-hero__bar">
+          <div className="y2k-hero__label">
+            <Sparkles className="y2k-hero__label-icon" />
+            <span>My Listening Profile</span>
+          </div>
+          <div className="y2k-hero__window">
+            <span>_</span>
+            <span>□</span>
+            <span>×</span>
           </div>
         </div>
-        <div className="app__header-meta">
-          <span className={`status-chip ${headerStatus.tone}`}>
-            {headerStatus.label}
-          </span>
-          <p className="muted">{headerStatus.subline}</p>
+        <div className="y2k-hero__body">
+          <div className="y2k-hero__hearts">
+            <Heart className="y2k-hero__heart" />
+            <Heart className="y2k-hero__heart" />
+            <Heart className="y2k-hero__heart" />
+          </div>
+          <h1 className="y2k-hero__title">{heroContent.title}</h1>
+          <p className="y2k-hero__desc">{heroContent.description}</p>
+          {heroBadges}
+          {heroAction}
+          <div className="y2k-hero__status">
+            <span className={`status-chip ${headerStatus.tone}`}>
+              {headerStatus.label}
+            </span>
+            <p className="muted">{headerStatus.subline}</p>
+          </div>
+          {heroError}
+          {heroFootnote}
         </div>
-      </header>
+      </section>
+
+      <div className="y2k-marquee">
+        <div className="y2k-marquee__track">
+          ★ Spotify data stories ★ Export playlists ★ Explore top artists ★ Monitor recently played ★
+          Spotify data stories ★ Export playlists ★ Explore top artists ★ Monitor recently played ★
+        </div>
+      </div>
+
       <main className="app__content">{renderContent}</main>
     </div>
   );
